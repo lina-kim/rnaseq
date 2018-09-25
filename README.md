@@ -8,7 +8,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 2. Activate environment: `source activate rnaseq`
 
 ### Prepare FASTA reference and GTF
-1. Download genome from UCSC Genome Browser: `chromFA.tar.gz`
-2. Download GTF from Ensembl: `Mus_musculus.GRCm38.93.gtf.gz`
+1. Download genome from [UCSC Genome Browser](http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/): `chromFA.tar.gz`
+2. Download GTF from [Ensembl](ftp://ftp.ensembl.org/pub/release-93/gtf/mus_musculus): `Mus_musculus.GRCm38.93.gtf.gz`
 3. Unzip FASTA: `tar -xvzf chromFa.tar.gz`
 4. Remove mitochondrial chromosome and other noncanonical chromosomes (`chr#_#########_random`) from directory
