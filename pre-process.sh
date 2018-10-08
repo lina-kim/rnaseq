@@ -4,7 +4,7 @@
 #$ -V
 #$ -m e
 #$ -pe whole_nodes 6 
-#$ -M klkim@mit.edu
+#$ -M
 ########################
 
 # Parameters
@@ -24,7 +24,7 @@ source $activate $hisat2;
 
 echo 'Virtual environment active...'
 cd /net/bmc-pub7/data0/essigmannlab/jobs/hisat2
-:<< IGNORE
+
 # Run alignments using HISAT2
 echo 'Running HISAT2...'
 date
@@ -38,7 +38,7 @@ done
 
 echo 'Alignments complete.'
 date
-IGNORE
+
 # Assemble transcripts using HISAT2
 echo 'Assembling transcripts for each sample...'
 date
