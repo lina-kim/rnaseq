@@ -1,0 +1,176 @@
+---
+title: "deseq2_dmsotc_mf"
+author: "Lina Kim"
+date: "October 4, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.path = "images/")
+```
+
+## Setup 
+
+### Setup for DESeq2
+
+```{r setup.deseq2}
+library(DESeq2)
+library(ballgown)
+```
+
+### Setup for differential expression analysis
+
+```{r setup.deg, cache=TRUE}
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(DOSE)
+library(pathview)
+library(purrr)
+library(clusterProfiler)
+library(biomaRt)
+ensembl <- useMart("ensembl",dataset="mmusculus_gene_ensembl")
+data_path <- "D:/Lina/Documents/share/mouse/hisat2/"
+
+mstrg_ens <- read.table(paste(data_path,'merged.annotated.for_ens_id.csv',sep=""), header=TRUE, sep=',')
+```
+
+## Differential Expression Analysis
+
+```{r deseq2}
+# Read in expression data calculated by StringTie
+dmsotc_mf.pheno_data <- read.csv(paste(data_path,'group_phenodata_csv/dmsotc_mf_phenodata.csv',sep=""))
+dmsotc_mf.bg_chr <- ballgown(dataDir=paste(data_path,'ballgown_dmsotc_mf',sep=""), samplePattern='D18', pData=dmsotc_mf.pheno_data)
+
+# Filter to remove low-abundance genes
+dmsotc_mf.bg_chr_filt <- subset(dmsotc_mf.bg_chr, 'rowVars(texpr(dmsotc_mf.bg_chr))>10', genomesubset=TRUE)
+
+# Create key-value pairs for MSTRG IDs (from Stringtie) to gene names
+dmsotc_mf.bg_chr.kv <- setNames(as.list(ballgown::geneNames(dmsotc_mf.bg_chr)),as.list(ballgown::geneIDs(dmsotc_mf.bg_chr)))
+
+dmsotc_mf.countData <- as.matrix(read.csv(paste(data_path,'ballgown_dmsotc_mf/gene_count_matrix.csv',sep=""),row.names='gene_id'))
+# Manually changed phenodata file to replace hyphens with periods, since read.csv did so above
+dmsotc_mf.colData <- read.table(paste(data_path,'group_phenodata_csv/dmsotc_mf_phenodata_corrected.csv',sep=""), row.names=1, header=TRUE, sep=',')
+
+dds.dmsotc_mf <- DESeqDataSetFromMatrix(countData=dmsotc_mf.countData, colData=dmsotc_mf.colData, design = ~ sex)
+dds.dmsotc_mf <- DESeq(dds.dmsotc_mf)
+res.dmsotc_mf <- results(dds.dmsotc_mf)
+resOrdered.dmsotc_mf <- res.dmsotc_mf[order(res.dmsotc_mf$padj),]
+geneIDs.dmsotc_mf_og <- rownames(resOrdered.dmsotc_mf)
+geneList.dmsotc_mf <- lapply(geneIDs.dmsotc_mf_og, function(id) {
+  return(dmsotc_mf.bg_chr.kv[[id]])
+})
+resOrdered.dmsotc_mf <- cbind(unlist(geneList.dmsotc_mf), resOrdered.dmsotc_mf)
+colnames(resOrdered.dmsotc_mf) <- c('geneName',colnames(resOrdered.dmsotc_mf)[-1])
+
+# Added to include Ensembl IDs
+geneIDs.dmsotc_mf <- lapply(geneIDs.dmsotc_mf_og, function(id) {
+  if (id %in% mstrg_ens$gene_id) {
+    return(as.character(mstrg_ens[mstrg_ens$gene_id == id, "ref_gene_id"]))
+  }
+  return(as.character(id))
+})
+geneIDs.dmsotc_mf <- unlist(geneIDs.dmsotc_mf)
+
+resOrdered.dmsotc_mf <- cbind(geneIDs.dmsotc_mf, resOrdered.dmsotc_mf)
+colnames(resOrdered.dmsotc_mf) <- c('geneID',colnames(resOrdered.dmsotc_mf)[-1])
+
+#resOrdered.dmsotc_mf <- cbind(unlist(geneList.dmsotc_mf), resOrdered.dmsotc_mf)
+#colnames(resOrdered.dmsotc_mf) <- c('geneName',colnames(resOrdered.dmsotc_mf)[-1])
+
+# Added for additional gene names identified via merged GTF
+geneList.dmsotc_mf <- apply(resOrdered.dmsotc_mf, 1, function(row) {
+  if (row[[2]] == '.' & row[[1]] %in% mstrg_ens$ref_gene_id) {
+    return(as.character(mstrg_ens[mstrg_ens$ref_gene_id == row[[1]], "gene_name"]))
+  }
+  return(as.character(row[[2]]))
+})
+
+resOrdered.dmsotc_mf <- resOrdered.dmsotc_mf[,-2]
+resOrdered.dmsotc_mf <- cbind(unlist(geneList.dmsotc_mf), resOrdered.dmsotc_mf)
+colnames(resOrdered.dmsotc_mf) <- c('geneName',colnames(resOrdered.dmsotc_mf)[-1])
+
+write.csv(resOrdered.dmsotc_mf, file='all_dmsotc_mf.csv', row.names=FALSE)
+```
+
+## GO Analysis
+
+### Retrieving annotations for DEGs of interest
+
+```{r go.keywords, cache=TRUE}
+all.dmsotc_mf <- read.table('all_dmsotc_mf.csv', header=TRUE, sep=',')
+all.dmsotc_mf <- all.dmsotc_mf[!is.na(all.dmsotc_mf$padj),]
+all.dmsotc_mf$geneID <- as.character(all.dmsotc_mf$geneID)
+all.dmsotc_mf <- all.dmsotc_mf[startsWith(all.dmsotc_mf$geneID,'ENSM'),]
+sig.dmsotc_mf <- all.dmsotc_mf[all.dmsotc_mf$padj < 0.05,]
+go.dmsotc_mf <- getBM(c("ensembl_gene_id","external_gene_name","go_id","name_1006","go_linkage_type","namespace_1003"),
+                  filters="ensembl_gene_id",
+                  values=sig.dmsotc_mf$geneID,
+                  mart=ensembl)
+go.dmsotc_mf <- go.dmsotc_mf[go.dmsotc_mf$go_id!='',]
+colnames(go.dmsotc_mf) <- c('ensembl_id','gene_name','go_id','annotation','evidence_code','sub-ontology')
+write.csv(go.dmsotc_mf, "go_dmsotc_mf.csv", row.names=FALSE)
+```
+
+### Overrepresentation Analysis
+
+```{r go.ora, cache=TRUE}
+# For biological process
+oraBP.dmsotc_mf <- enrichGO(gene=sig.dmsotc_mf$geneID,
+                      universe=all.dmsotc_mf$geneID,
+                      keyType="ENSEMBL",
+                      OrgDb=org.Mm.eg.db,
+                      ont="BP",
+                      pAdjustMethod="fdr",
+                      qvalueCutoff=0.05,
+                      readable=TRUE)
+oraBP.dmsotc_mf_summary <- data.frame(oraBP.dmsotc_mf)
+ora.dmsotc_mf.fc <- sig.dmsotc_mf$log2FoldChange
+names(ora.dmsotc_mf.fc) <- sig.dmsotc_mf$geneName
+
+# Figures for BP
+dotplot(oraBP.dmsotc_mf)
+cnetplot(oraBP.dmsotc_mf,
+         categorySize='p.adjust',
+         foldChange=ora.dmsotc_mf.fc,
+         vertex.label.font=8)
+```
+
+### Functional Class Scoring
+
+```{r go.fcs, warnings=FALSE, cache=TRUE}
+go.dmsotc_mf_ids <- getBM(c("ensembl_gene_id", "entrezgene"),
+                      filters="ensembl_gene_id",
+                      values=all.dmsotc_mf$geneID,
+                      mart=ensembl)
+colnames(go.dmsotc_mf_ids) <- c('ensembl_id','entrez_id')
+# Not a 1-to-1 mapping between Ensembl and Entrez IDs, even for known protein-coding genes
+# ex: ENSMUSG00000022820 codes for NADH dehydrogenase subcomplex 4
+#     maps to both Entrez IDs 100041273 (subunit B4C) and 100042503 (subunit B4B)
+# TODO: when a single Ensembl entry maps to two Entrez, duplicate the fold change info? or pick one? pick one just to be safe.
+# TODO: when two Ensembl entries map to a single Entrez, make manual decision? only ~5
+#       na.omit(go.dmsotc_mf_ids[duplicated(go.dmsotc_mf_ids$entrezgene),])
+go.dmsotc_mf_ids <- go.dmsotc_mf_ids[!duplicated(go.dmsotc_mf_ids$ensembl_id),]
+go.dmsotc_mf_ids <- go.dmsotc_mf_ids[!duplicated(go.dmsotc_mf_ids$entrez_id),]
+go.dmsotc_mf_ids <- na.omit(go.dmsotc_mf_ids)
+
+get.dmsotc_mf_ids <- setNames(go.dmsotc_mf_ids$entrez_id,go.dmsotc_mf_ids$ensembl_id)
+
+fcs.dmsotc_mf.fc <- all.dmsotc_mf[,c(2,4,8)]
+fcs.dmsotc_mf.fc <- fcs.dmsotc_mf.fc[fcs.dmsotc_mf.fc[,1] %in% go.dmsotc_mf_ids$ensembl_id,]
+dmsotc_mf.entrez <- unlist(lapply(fcs.dmsotc_mf.fc$geneID, function(id) {
+  return(get.dmsotc_mf_ids[[id]])
+}))
+fcs.dmsotc_mf.log2 <- fcs.dmsotc_mf.fc$log2FoldChange
+names(fcs.dmsotc_mf.log2) <- dmsotc_mf.entrez
+fcs.dmsotc_mf.log2 <- sort(fcs.dmsotc_mf.log2, decreasing=TRUE)
+
+# Using KEGG gene sets
+fcs.dmsotc_mf.kegg <- gseKEGG(geneList=fcs.dmsotc_mf.log2,
+                          organism='mmu',
+                          nPerm=10000,
+                          minGSSize=5,
+                          pvalueCutoff=0.1,
+                          verbose=FALSE)
+write.csv(fcs.dmsotc_mf.kegg, "dmsotc_mf_fcs_summary.csv",quote=F)
+# ```
