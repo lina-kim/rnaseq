@@ -17,6 +17,6 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 1. Trim adapter sequences and ends: `trimmomatic-0.38.jar SE $seq.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:4:30 LEADING:30 TRAILING:30 MINLEN:25`
 
 ## References
-[Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
-[Nature Protocols paper on HISAT2 and StringTie](https://ccb.jhu.edu/software/hisat2/manual.shtml)
-[HISAT2 manual](https://www.nature.com/articles/nprot.2016.095)
+* [Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
+* [Nature Protocols paper on HISAT2 and StringTie](https://ccb.jhu.edu/software/hisat2/manual.shtml)
+* [HISAT2 manual](https://www.nature.com/articles/nprot.2016.095)
