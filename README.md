@@ -24,6 +24,23 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 ### Trim raw RNA-seq reads
 1. Trim adapter sequences and ends: `trimmomatic-0.38.jar SE $seq.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:4:30 LEADING:30 TRAILING:30 MINLEN:25`
 
+### Align RNA-seq reads to reference genome using HISAT2
+1. Map to whole genome, accounting for known splice sites: `hisat2 --dta -x ref/m10 --known-splicesite-infile ref/mm10.gtf.ss -U $trimmed.fastq -S $sample.hisat2.sam`
+2. Convert to BAM: `samtools view -bS $sample.hisat2.sam > $sample.hisat2.unsorted.bam`
+3. Sort BAM file: `samtools sort -o $sample.hisat2.bam $sample.hisat2.unsorted.bam`
+
+### Assemble and quantify expressed genes and transcripts with StringTie
+1. Assemble transcripts: `stringtie -G ref/mm10.gtf [-A $sample\_gene\_abund.tab] -o $sample.gtf -l $sample $sample.hisat2.bam`
+2. Merge transcripts from all samples: `stringtie --merge -G ref/mm10.gtf -G -o merged merged\_mergelist.txt`
+3. Compare sequenced transcripts with the reference: `gffcompare -r ref/mm10.gtf -G -o merged merged.gtf`
+4. Estimate abundances for differential expression analysis: `stringtie -e -B -G merged.gtf -o ballgown/$sample/$sample.gtf $sample.hisat2.bam`
+
+### Prepare StringTie outputs for differential expression analysis
+1. Download Python script ([prepDE.py](http://ccb.jhu.edu/software/stringtie/dl/prepDE.py)) provided by StringTie developers
+2. Run script to extract read count information from StringTie outputs: `python2 prepDE.py [-i ballgown]`
+   * Note: This assumes default directory structure created by StringTie, with a `ballgown` folder in the working directory.
+   * Note: The script relies on Python 2, so take note of your default version!
+
 ## References
 * [Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
 * [Nature Protocols paper on HISAT2 and StringTie](https://ccb.jhu.edu/software/hisat2/manual.shtml)
