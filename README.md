@@ -37,9 +37,9 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 
 ### Prepare StringTie outputs for differential expression analysis
 1. Download Python script ([prepDE.py](http://ccb.jhu.edu/software/stringtie/dl/prepDE.py)) provided by StringTie developers
-2. Run script to extract read count information from StringTie outputs: `python2 prepDE.py [-i ballgown]`
+2. Run script to extract read count information from StringTie outputs: `python prepDE.py [-i ballgown]`
    * Note: This assumes default directory structure created by StringTie, with a `ballgown` folder in the working directory.
-   * Note: The script relies on Python 2, so take note of your default version!
+   * Note: The script requires a Python version between 2.7 and 3.
 
 ## References
 * [Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
