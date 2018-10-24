@@ -8,7 +8,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 2. Activate environment: `source activate rnaseq`
 
 ### Prepare FASTA reference and GTF
-1. Download genome from [UCSC Genome Browser](http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/): `chromFA.tar.gz`
+1. Download genome from [UCSC Genome Browser](http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/): `chromFa.tar.gz`
 2. Unzip FASTA: `tar -xvzf chromFa.tar.gz`
 3. Remove mitochondrial chromosome and other noncanonical chromosomes (`chr#_#########_random`) from directory
 4. Compile chromosomal FASTA files to single file: `cat *.fa > mm10.fa`
