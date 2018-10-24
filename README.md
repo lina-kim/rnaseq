@@ -25,7 +25,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 1. Trim adapter sequences and ends: `trimmomatic-0.38.jar SE $seq.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:4:30 LEADING:30 TRAILING:30 MINLEN:25`
 
 ### Align RNA-seq reads to reference genome using HISAT2
-1. Map to whole genome, accounting for known splice sites: `hisat2 --dta -x ref/m10 --known-splicesite-infile ref/mm10.gtf.ss -U $trimmed.fastq -S $sample.hisat2.sam`
+1. Map to whole genome, accounting for known splice sites: `hisat2 --dta -x ref/mm10 --known-splicesite-infile ref/mm10.gtf.ss -U $trimmed.fastq -S $sample.hisat2.sam`
 2. Convert to BAM: `samtools view -bS $sample.hisat2.sam > $sample.hisat2.unsorted.bam`
 3. Sort BAM file: `samtools sort -o $sample.hisat2.bam $sample.hisat2.unsorted.bam`
 
