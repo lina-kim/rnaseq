@@ -30,14 +30,12 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 3. Sort BAM file: `samtools sort -o $sample.hisat2.bam $sample.hisat2.unsorted.bam`
 
 ### Assemble and quantify expressed genes and transcripts with StringTie
-1. Assemble transcripts: `stringtie -G ref/mm10.gtf [-A $sample\_gene\_abund.tab] -o $sample.gtf -l $sample $sample.hisat2.bam`
-2. Merge transcripts from all samples: `stringtie --merge -G ref/mm10.gtf -G -o merged merged\_mergelist.txt`
-3. Compare sequenced transcripts with the reference: `gffcompare -r ref/mm10.gtf -G -o merged merged.gtf`
-4. Estimate abundances for differential expression analysis: `stringtie -e -B -G merged.gtf -o ballgown/$sample/$sample.gtf $sample.hisat2.bam`
+1. Estimate abundances for differential expression analysis: `stringtie -e -B -G ref/mm10.gtf -A $sample\_abund.tab -o ballgown/$sample/$sample.gtf $sample.hisat2.bam`
+   * Note: This is considered StringTie's "alternate" workflow, relying on a well-annotated reference; it will not search for novel isoforms. Recommended by the StringTie creator [here](https://github.com/gpertea/stringtie/issues/170).
 
 ### Prepare StringTie outputs for differential expression analysis
 1. Download Python script ([prepDE.py](http://ccb.jhu.edu/software/stringtie/dl/prepDE.py)) provided by StringTie developers
-2. Run script to extract read count information from StringTie outputs: `python prepDE.py -l 40`
+2. Run script to extract read count information from StringTie outputs: `python2.7 prepDE.py -l 40`
    * Note: This assumes default directory structure created by StringTie, with a `ballgown` folder in the working directory.
    * Note: The script requires a Python version between 2.7 and 3.
    * Note: the `-l` parameter takes in average read length. While this doesn't affect relative transcript levels, it will impact your absolute values! The default parameter for `-l` is `75`.
