@@ -43,5 +43,5 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 
 ## References
 * [Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
-* [Nature Protocols paper on HISAT2 and StringTie](https://ccb.jhu.edu/software/hisat2/manual.shtml)
-* [HISAT2 manual](https://www.nature.com/articles/nprot.2016.095)
+* [Nature Protocols paper on HISAT2 and StringTie](https://www.nature.com/articles/nprot.2016.095)
+* [HISAT2 & StringTie manual](https://ccb.jhu.edu/software/hisat2/manual.shtml)
