@@ -39,7 +39,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 2. Run script to extract read count information from StringTie outputs: `python2.7 prepDE.py -l 40`
    * _Note:_ This assumes default directory structure created by StringTie, with a `ballgown` folder in the working directory.
    * _Note:_ The script requires a Python version between 2.7 and 3.
-   * _Note:_ the `-l` parameter takes in average read length. While this doesn't affect relative transcript levels, it will impact your absolute values! The default parameter for `-l` is `75`.
+   * _Note:_ The `-l` parameter takes in average read length. While this doesn't affect relative transcript levels, it will impact your absolute values! The default parameter for `-l` is `75`.
 
 ## References
 * [Trimmomatic manual](http://www.usadellab.org/cms/?page=trimmomatic)
