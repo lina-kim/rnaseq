@@ -7,7 +7,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 1. Create environment from `yml` file: `conda env create -f rnaseq_env.yml`
 2. Activate environment: `source activate rnaseq`
 
-### Prepare FASTA reference and GTF
+### Prepare FASTA reference
 1. Download genome from [UCSC Genome Browser](http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/): `chromFa.tar.gz`
 2. Unzip FASTA: `tar -xvzf chromFa.tar.gz`
 3. Remove mitochondrial chromosome and other noncanonical chromosomes (`chr#_#########_random`) from directory
@@ -15,7 +15,7 @@ Pipeline for RNA-seq scripts used by the Essigmann Lab.
 5. If necessary, modify FASTA file to match naming convention for GTF file: `sed -i 's/chr//g' mm10.fa`
 6. Index reference: `hisat2-build -f mm10.fa mm10`
 
-### Prepare GTF transcriptome reference
+### Prepare GTF reference transcriptome
 1. Download GTF from [Ensembl](https://bit.ly/2xPCJYz): `Mus_musculus.GRCm38.93.gtf.gz`
 2. Unzip GTF: `tar -xzvf Mus_musculus.GRCm38.93.gtf.gz`
 3. (Optional) Rename file: `mv Mus_musculus.GRCm38.93.gtf mm10.gtf`
