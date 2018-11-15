@@ -11,15 +11,11 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 ## Setup 
-### Setup for DESeq2
-
-```{r setup.deseq2}
-library(DESeq2)
-```
 
 ### Setup for differential expression analysis
 
 ```{r setup.deg, cache=TRUE}
+library(DESeq2)
 library(AnnotationDbi)
 library(org.Mm.eg.db)
 library(DOSE)
@@ -68,6 +64,8 @@ dups <- dups[order(dups$gene_name),]
 
 #write.csv(readable, "gene_count_matrix_readable.csv", row.names=FALSE)
 ```
+
+### Function for DESeq analysis and output
 ```{r deseq.func}
 # Differential expression pairs
 # By sex: DMSO, DMSO+TC, AFB1, AFB1+TC
@@ -120,6 +118,8 @@ dea.group <- function(inp.dds, exp.comp, exp.treat, exp.sex=NA) {
 }
 ```
 
+### Run DESeq2 on experimental groups
+
 ```{r deseq2.groups}
 # All data, no design specified
 dds <- DESeqDataSetFromMatrix(countData=count_data, colData=pheno_data, design=~1)
@@ -141,13 +141,3 @@ dds.tc_dmsof <- dea.group(dds, "TCPOBOP", "DMSO", "F")
 dds.tc_afb1m <- dea.group(dds, "TCPOBOP", "AFB1", "M")
 dds.tc_afb1f <- dea.group(dds, "TCPOBOP", "AFB1", "F")
 ```
-
-```{r clean-csv}
-all.dmsona_mf <- read.table("all_dmsona_mf.csv", sep=",", header=TRUE)
-all.dmsona_mf <- all.dmsona_mf[!is.na(all.dmsona_mf$padj),]
-all.dmsona_mf$geneID <- as.character(all.dmsona_mf$geneID)
-all.dmsona_mf <- all.dmsona_mf[startsWith(all.dmsona_mf$geneID,'ENSM'),]
-all.dmsona_mf <- all.dmsona_mf[,c("geneName","geneID","log2FoldChange","padj")]
-write.csv(all.dmsona_mf, file="dmsona_mf_genes.csv", row.names=FALSE)
-```
-
