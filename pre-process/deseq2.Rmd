@@ -16,12 +16,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ```{r setup.deg, cache=TRUE}
 library(DESeq2)
-library(AnnotationDbi)
 library(org.Mm.eg.db)
-library(DOSE)
-library(pathview)
-library(purrr)
-library(clusterProfiler)
 library(biomaRt)
 
 ensembl <- useMart("ensembl",dataset="mmusculus_gene_ensembl")
