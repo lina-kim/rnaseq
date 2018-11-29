@@ -1,20 +1,5 @@
----
-title: "TCPOBOP Differential Expression Analysis"
-author: "Lina Kim"
-date: "November 1, 2018"
-output: pdf_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-                      fig.path = "images/")
-```
-
-## Setup 
-
-### Setup for differential expression analysis
-
-```{r setup.deg, cache=TRUE}
+# Setup 
+## Setup for differential expression analysis
 library(DESeq2)
 library(org.Mm.eg.db)
 library(biomaRt)
@@ -22,18 +7,15 @@ library(biomaRt)
 ensembl <- useMart("ensembl",dataset="mmusculus_gene_ensembl")
 data_path <- "D:/Lina/Documents/share/mouse/hisat2_alt/"
 setwd(data_path)
-```
 
-## Differential Expression Analysis
+# Differential Expression Analysis
+## Read in expression data, make conversions to count matrices
 
-### Read in expression data, make conversions to count matrices
-
-```{r convert}
-# Read in expression data calculated by StringTie
+### Read in expression data calculated by StringTie
 pheno_data <- read.table("180711Ess_phenodata.csv", header=TRUE, sep=",")
 count_data <- read.table("gene_count_matrix.csv", header=TRUE, sep=",", row.names=1)
 
-# Create readable gene count matrix
+### Create readable gene count matrix
 gene_names <- getBM(c("ensembl_gene_id", "external_gene_name"),
                       filters="ensembl_gene_id",
                       values=rownames(count_data),
@@ -51,26 +33,24 @@ gene_list <- lapply(rownames(count_data), function(id) {
 readable <- cbind(unlist(gene_list), rownames(count_data), count_data)
 colnames(readable) <- c("gene_name", "ensembl_id", colnames(count_data))
 
-# Cleanup: remove unnamed genes and duplicates
+### Cleanup: remove unnamed genes and duplicates
 readable <- readable[readable$gene_name != ".",]   # remove unnamed genes
 dups <- readable[duplicated(readable$gene_name) | duplicated(readable$gene_name, fromLast = TRUE),]
 dups <- dups[order(dups$gene_name),]
-#write.csv(dups, "duplicates.csv", row.names=FALSE)
+write.csv(dups, "duplicates.csv", row.names=FALSE)
 
-#write.csv(readable, "gene_count_matrix_readable.csv", row.names=FALSE)
-```
+write.csv(readable, "gene_count_matrix_readable.csv", row.names=FALSE)
 
-### Function for DESeq analysis and output
-```{r deseq.func}
-# Differential expression pairs
-# By sex: DMSO, DMSO+TC, AFB1, AFB1+TC
-# By TC: DMSO(M), DMSO(F), AFB1(M), AFB1(F)
+## Function for DESeq analysis and output
+### Differential expression pairs
+### By sex: DMSO, DMSO+TC, AFB1, AFB1+TC
+### By TC: DMSO(M), DMSO(F), AFB1(M), AFB1(F)
 valid.comp = c('sex', 'TCPOBOP')
 valid.treat = c('DMSO', 'DMSO+TC', 'AFB1', 'AFB1+TC')
 valid.sex = c('M', 'F')
 
-# For TCPOBOP addition comparisons, input values for exp.treat must be the non-TC treatment value.
-# e.g. "DMSO" instead of "DMSO+TC".
+### For TCPOBOP addition comparisons, input values for exp.treat must be the non-TC treatment value.
+### e.g. "DMSO" instead of "DMSO+TC".
 dea.group <- function(inp.dds, exp.comp, exp.treat, exp.sex=NA) {
   if (exp.comp == 'sex') {
     dds.sort <- inp.dds[,inp.dds$treatment == exp.treat]
@@ -111,28 +91,24 @@ dea.group <- function(inp.dds, exp.comp, exp.treat, exp.sex=NA) {
   write.csv(out.dds, file=filename, row.names=FALSE)
   return(out.dds)
 }
-```
 
-### Run DESeq2 on experimental groups
-
-```{r deseq2.groups}
-# All data, no design specified
+## Run DESeq2 on experimental groups
+### All data, no design specified
 dds <- DESeqDataSetFromMatrix(countData=count_data, colData=pheno_data, design=~1)
 
-# Filter to remove low-abundance genes
+### Filter to remove low-abundance genes
 keep.rows <- rowSums(counts(dds)) >= 10
 dds <- dds[keep.rows,]
 
-# Data by design and treatment group
-# By sex
+### Data by design and treatment group
+### By sex
 dds.sex_dmsona <- dea.group(dds, "sex", "DMSO")
 dds.sex_dmsotc <- dea.group(dds, "sex", "DMSO+TC")
 dds.sex_afb1na <- dea.group(dds, "sex", "AFB1")
 dds.sex_afb1tc <- dea.group(dds, "sex", "AFB1+TC")
 
-# By TCPOBOP addition
+### By TCPOBOP addition
 dds.tc_dmsom <- dea.group(dds, "TCPOBOP", "DMSO", "M")
 dds.tc_dmsof <- dea.group(dds, "TCPOBOP", "DMSO", "F")
 dds.tc_afb1m <- dea.group(dds, "TCPOBOP", "AFB1", "M")
 dds.tc_afb1f <- dea.group(dds, "TCPOBOP", "AFB1", "F")
-```
