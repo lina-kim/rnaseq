@@ -4,7 +4,7 @@
 #$ -V
 #$ -m e
 #$ -pe whole_nodes 6
-#$ -M klkim@mit.edu
+#$ -M email@mit.edu
 ##############################
 
 # Parameters
